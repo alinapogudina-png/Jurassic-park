@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jurassic RPG Builder PRO</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #526a40; color: #ffffff; display: flex; padding: 20px; gap: 20px; height: 100vh; margin: 0; box-sizing: border-box; overflow: hidden; }
+        body::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 40%, rgba(255, 255, 255, 0.05), transparent 40%); z-index: -1; }
+        .editor-panel, .preview-panel { background-color: rgba(20, 30, 15, 0.85); backdrop-filter: blur(12px); padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); z-index: 1; }
+        .editor-panel { width: 45%; display: flex; flex-direction: column; overflow-y: auto; }
+        .preview-panel { width: 55%; display: flex; flex-direction: column; position: relative; }
+        .editor-panel::-webkit-scrollbar { width: 8px; }
+        .editor-panel::-webkit-scrollbar-thumb { background: #89a873; border-radius: 4px; }
+        h1 { color: #facc15; font-weight: 800; font-size: 24px; margin: 0 0 5px 0; text-align: center; text-transform: uppercase; letter-spacing: 2px;}
+        .subtitle { text-align: center; color: #b1c7a3; font-size: 12px; margin-bottom: 20px; letter-spacing: 0.5px;}
+        h3 { color: #facc15; font-size: 14px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; margin-top: 20px; text-transform: uppercase;}
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 11px; color: #b1c7a3; text-transform: uppercase;}
+        input[type="text"], select, textarea, input[type="number"] { width: 100%; padding: 10px 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background-color: rgba(0,0,0,0.4); color: #fff; box-sizing: border-box; font-family: 'Poppins', sans-serif; font-size: 14px; transition: 0.3s; }
+        input[type="text"]:focus, select:focus, textarea:focus, input[type="number"]:focus { border-color: #facc15; outline: none; }
+        textarea { resize: vertical; min-height: 80px; white-space: pre; }
+        .flex-row { display: flex; gap: 15px; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; }
+        .flex-col { flex: 1; min-width: 120px; }
+        .checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: #fff; background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 10px;}
+        .checkbox-label input { width: 18px; height: 18px; cursor: pointer; accent-color: #facc15;}
+        #previewFrame { width: 100%; flex: 1; border: 2px solid rgba(255,255,255,0.2); border-radius: 15px; background-color: #000; outline: none; }
+        button.dl-btn { background: linear-gradient(135deg, #f59e0b, #facc15); color: #000; padding: 18px; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 800; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); margin-top: 20px; width: 100%;}
+        button.dl-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4); }
+    </style>
+</head>
+<body>
+    <div class="editor-panel">
+        <h1>RPG Builder</h1>
+        <div class="subtitle">Стиль: Парк Юрского Периода 🦖</div>
+        
+        <div class="flex-row">
+            <div class="form-group flex-col"><label>Язык</label>
+                <select id="uiLang" onchange="debounceGenerate()">
+                    <option value="EN">English</option>
+                    <option value="RU" selected>Русский</option>
+                    <option value="ES">Español</option>
+                    <option value="FR">Français</option>
+                    <option value="DE">Deutsch</option>
+                    <option value="IT">Italiano</option>
+                    <option value="PT">Português</option>
+                    <option value="TR">Türkçe</option>
+                </select>
+            </div>
+            <div class="form-group flex-col"><label>Жизни</label><input type="number" id="maxLives" value="3" min="1" max="10" oninput="debounceGenerate()"></div>
+            <div class="form-group flex-col"><label>Враги</label><input type="number" id="enemyCount" value="15" min="0" max="50" oninput="debounceGenerate()"></div>
+        </div>
+
+        <div class="form-group"><label>Музыка (URL)</label><input type="text" id="bgmUrl" value="https://archive.org/download/zabavnoe-zvuchanie-kapelek-mp-3cut.net-quiet/zabavnoe-zvuchanie-kapelek%20%28mp3cut.net%29QUIET.mp3" oninput="debounceGenerate()"></div>
+        <div class="form-group"><label>Тип Фона</label><select id="bgType" onchange="toggleCustomBg(); debounceGenerate()"><option value="grass" selected>Трава</option><option value="sand">Песок</option><option value="dirt">Земля</option><option value="lava">Лава</option><option value="custom">Свой фон</option></select></div>
+        <div class="form-group" id="customBgGroup" style="display: none;"><label>Свой Фон (URL)</label><input type="text" id="bgImg" value="" oninput="debounceGenerate()"></div>
+        <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="useSound" checked onchange="debounceGenerate()"> 🔊 Музыка и звуки</label></div>
+
+        <h3>Иконки</h3>
+        <div class="form-group"><label>Герои (каждый с новой строки)</label><textarea id="heroesImg" rows="6" oninput="debounceGenerate()">🦖
+🦕
+🦎
+🐢
+🐉
+🦅</textarea></div>
+        <div class="flex-row">
+            <div class="form-group flex-col"><label>Преграда 1</label><input type="text" id="obs1Img" value="🌴" oninput="debounceGenerate()"></div>
+            <div class="form-group flex-col"><label>Преграда 2</label><input type="text" id="obs2Img" value="🌋" oninput="debounceGenerate()"></div>
+        </div>
+        <div class="flex-row">
+            <div class="form-group flex-col"><label>Враг</label><input type="text" id="enemyImg" value="🐊" oninput="debounceGenerate()"></div>
+            <div class="form-group flex-col"><label>Артефакт</label><input type="text" id="artImg" value="🦴" oninput="debounceGenerate()"></div>
+        </div>
+        <div class="flex-row">
+            <div class="form-group flex-col"><label>Доп. Жизнь</label><input type="text" id="appleImg" value="🍎" oninput="debounceGenerate()"></div>
+            <div class="form-group flex-col"><label>Иконка ХП</label><input type="text" id="lifeImg" value="🥚" oninput="debounceGenerate()"></div>
+        </div>
+
+        <h3>Вопросы (Выбор вариантов)</h3>
+        <div class="flex-row">
+            <div class="form-group flex-col" style="flex: 1.2;"><label>Вопросы</label><textarea id="qData" rows="3" oninput="debounceGenerate()">Кем был Тираннозавр?
+У кого из них 3 рога?</textarea></div>
+            <div class="form-group flex-col" style="flex: 1.5;"><label>Ответы (прав|ошибка|ошибка)</label><textarea id="aData" rows="3" oninput="debounceGenerate()">Хищником|Травоядным|Всеядным
+Трицератопс|Стегозавр|Велоцираптор</textarea></div>
+        </div>
+
+        <h3>Вопросы (Ввод Текста)</h3>
+        <div class="flex-row">
+            <div class="form-group flex-col" style="flex: 1.2;"><label>Вопросы</label><textarea id="qDataText" rows="3" oninput="debounceGenerate()">У Брахиозавра была длинная...
+Что откладывали динозавры?</textarea></div>
+            <div class="form-group flex-col" style="flex: 1.5;"><label>Ответ</label><textarea id="aDataText" rows="3" oninput="debounceGenerate()">Шея
+Яйца</textarea></div>
+        </div>
+
+        <button class="dl-btn" onclick="downloadHTML()">💾 СКАЧАТЬ КАК HTML ИГРУ</button>
+    </div>
+
+    <div class="preview-panel">
+        <h2 style="color: #fff; margin-top:0; font-size: 20px;">Предпросмотр (кликните по игре для упр. клавиатурой)</h2>
+        <iframe id="previewFrame" srcdoc="" frameborder="0" allow="autoplay; audio; fullscreen"></iframe>
+    </div>
+
+    <script>
+        function toggleCustomBg() { document.getElementById('customBgGroup').style.display = document.getElementById('bgType').value === 'custom' ? 'block' : 'none'; }
+        
+        // Добавлен перевод слова "ПАУЗА" для всех языков
+        const dicts = { 
+            EN: { t: "JURASSIC ADVENTURE", s: "Find artifacts. Avoid predators!", st: "START GAME", w: "YOU SURVIVED!", l: "GAME OVER", r: "TRY AGAIN", ri: "CORRECT!", wr: "-1 HP", ta: "Type answer...", su: "SUBMIT", pa: "PAUSED" },
+            RU: { t: "ЮРСКИЕ ПРИКЛЮЧЕНИЯ", s: "Найди артефакты. Избегай хищников!", st: "ИГРАТЬ", w: "ВЫ ПОБЕДИЛИ!", l: "ИГРА ОКОНЧЕНА", r: "ИГРАТЬ СНОВА", ri: "ВЕРНО!", wr: "-1 HP", ta: "Введите ответ...", su: "ОТВЕТИТЬ", pa: "ПАУЗА" },
+            ES: { t: "AVENTURA JURÁSICA", s: "Encuentra artefactos. Evita depredadores!", st: "JUGAR", w: "¡SOBREVIVISTE!", l: "FIN DEL JUEGO", r: "REINTENTAR", ri: "¡CORRECTO!", wr: "-1 HP", ta: "Respuesta...", su: "ENVIAR", pa: "PAUSA" },
+            FR: { t: "AVENTURE JURASSIQUE", s: "Trouvez tous les artefacts.", st: "JOUER", w: "VOUS AVEZ SURVÉCU!", l: "FIN DE PARTIE", r: "RÉESSAYER", ri: "CORRECT!", wr: "-1 HP", ta: "Tapez votre réponse...", su: "SOUMETTRE", pa: "PAUSE" },
+            DE: { t: "JURA-ABENTEUER", s: "Finde alle Artefakte.", st: "STARTEN", w: "ÜBERLEBT!", l: "SPIEL VORBEI", r: "NOCHMAL", ri: "RICHTIG!", wr: "-1 HP", ta: "Antwort eingeben...", su: "ABSENDEN", pa: "PAUSE" },
+            IT: { t: "AVVENTURA GIURASSICA", s: "Trova gli artefatti.", st: "GIOCA", w: "SEI SOPRAVVISSUTO!", l: "FINE GIOCO", r: "RIPROVA", ri: "CORRETTO!", wr: "-1 HP", ta: "Scrivi la risposta...", su: "INVIA", pa: "PAUSA" },
+            PT: { t: "AVENTURA JURÁSSICA", s: "Encontre os artefatos.", st: "JOGAR", w: "VOCÊ SOBREVIVEU!", l: "FIM DE JOGO", r: "TENTAR NOVAMENTE", ri: "CORRETO!", wr: "-1 HP", ta: "Digite a resposta...", su: "ENVIAR", pa: "PAUSA" },
+            TR: { t: "JURA MACERASI", s: "Eserleri bul.", st: "BAŞLA", w: "HAYATTA KALDIN!", l: "OYUN BİTTİ", r: "TEKRAR DENE", ri: "DOĞRU!", wr: "-1 HP", ta: "Cevabı yazın...", su: "GÖNDER", pa: "DURAKLATILDI" }
+        };
+
+        function getInputs() {
+            return {
+                l: document.getElementById('uiLang').value, mL: parseInt(document.getElementById('maxLives').value) || 3, eC: parseInt(document.getElementById('enemyCount').value) || 15,
+                uS: document.getElementById('useSound').checked, bU: document.getElementById('bgmUrl').value.trim(), bT: document.getElementById('bgType').value, bI: document.getElementById('bgImg').value.trim(),
+                o1: document.getElementById('obs1Img').value.trim(), o2: document.getElementById('obs2Img').value.trim(), eI: document.getElementById('enemyImg').value.trim(),
+                aI: document.getElementById('artImg').value.trim(), lI: document.getElementById('lifeImg').value.trim(), apI: document.getElementById('appleImg').value.trim(),
+                hr: document.getElementById('heroesImg').value.split('\n').map(x=>x.trim()).filter(x=>x!==''), qR: document.getElementById('qData').value, aR: document.getElementById('aData').value,
+                qTR: document.getElementById('qDataText').value, aTR: document.getElementById('aDataText').value
+            };
+        }
+
+        function buildQ(qc, ac, qt, at) {
+            let d = [];
+            let qA = qc.split('\n').map(x=>x.trim()).filter(x=>x!==''); let aA = ac.split('\n').map(x=>x.trim()).filter(x=>x!=='');
+            for(let i=0; i<Math.min(qA.length, aA.length); i++) {
+                let p = aA[i].split('|').map(x=>x.trim()); if(p.length < 1) continue;
+                d.push({ t: 'c', q: qA[i], o: p.map((tx, idx) => ({ t: tx, c: idx === 0 })) });
+            }
+            let qTA = qt.split('\n').map(x=>x.trim()).filter(x=>x!==''); let aTA = at.split('\n').map(x=>x.trim()).filter(x=>x!=='');
+            for(let i=0; i<Math.min(qTA.length, aTA.length); i++) d.push({ t: 't', q: qTA[i], a: aTA[i] });
+            return d.length ? d : [{ t: 'c', q: "No questions!", o: [{t:"Ok", c:true}] }];
+        }
+
+        let currentHTML = "";
+
+        function generateCode() {
+            const cf = getInputs();
+            const lang = dicts[cf.l] || dicts['EN'];
+            const qJ = JSON.stringify(buildQ(cf.qR, cf.aR, cf.qTR, cf.aTR));
+            
+            const bgs = {
+                grass: "background:#3b5e2b;background-image:radial-gradient(#2d4c1e 15%,transparent 16%),radial-gradient(#2d4c1e 15%,transparent 16%);background-size:60px 60px;background-position:0 0,30px 30px;",
+                sand: "background:#e4c88a;background-image:radial-gradient(#d1b16a 15%,transparent 16%),radial-gradient(#d1b16a 15%,transparent 16%);background-size:60px 60px;background-position:0 0,30px 30px;",
+                dirt: "background:#5c4033;background-image:radial-gradient(#422e25 15%,transparent 16%),radial-gradient(#422e25 15%,transparent 16%);background-size:60px 60px;background-position:0 0,30px 30px;",
+                lava: "background:#b22222;background-image:radial-gradient(#ff4500 20%,transparent 20%),radial-gradient(#8b0000 20%,transparent 20%);background-size:60px 60px;background-position:0 0,30px 30px;"
+            };
+            let bgCSS = (cf.bT === 'custom' && cf.bI) ? `background:#111 url('${cf.bI.replace(/['"]/g,'')}');background-size:200px;` : bgs[cf.bT];
+
+            const gameScript = `
+const $=id=>document.getElementById(id),$$=s=>document.querySelectorAll(s);
+window.onload=()=>{window.focus();}; document.body.onclick=()=>{window.focus();};
+
+function rO(v){return (v.startsWith('http')||v.startsWith('data:'))?'<img src="'+v+'" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">':v;}
+const qD=${qJ},hr=${JSON.stringify(cf.hr)};
+let gSt=0; // 0:Start, 1:Play, 2:Quiz, 3:End
+let pX=1250,pY=1250,sp=4.5,cL=${cf.mL},aC=0,tA=qD.length,iIn=0,isP=0;
+let ks={u:0,d:0,l:0,r:0},en=[],ar=[],ob=[],hl=[],cAi=-1,aQt=null,qFi=0,hFi=0;
+let vp=$('vp'),w=$('w'),pO=$('p'),sEn=${cf.uS},aCx,bgM=new Audio('${cf.bU}');bgM.loop=1;bgM.volume=0.2;
+
+window.tS=function(){sEn=!sEn;$('s-b').innerText=sEn?'🔊':'🔇';if(sEn){iA();if(!isP)bgM.play().catch(()=>{});}else bgM.pause();};
+window.tP=function(){
+    if(gSt!==1)return;
+    isP=!isP;
+    $('p-b').innerText=isP?'▶️':'⏸️';
+    $('pa-m').style.display=isP?'flex':'none';
+    if(isP){
+        ks={u:0,d:0,l:0,r:0}; // stop movement on pause
+        if(sEn)bgM.pause();
+    }else{
+        if(sEn)bgM.play().catch(()=>{});
+        requestAnimationFrame(gL);
+    }
+};
+
+function iA(){if(!aCx)aCx=new(window.AudioContext||window.webkitAudioContext)();if(aCx.state==='suspended')aCx.resume();}
+function pS(t){if(!sEn)return;iA();let o=aCx.createOscillator(),g=aCx.createGain(),n=aCx.currentTime;o.connect(g);g.connect(aCx.destination);
+if(t==='h'||t==='w'){o.type='sawtooth';o.frequency.setValueAtTime(150,n);o.frequency.exponentialRampToValueAtTime(40,n+0.3);g.gain.setValueAtTime(0.3,n);g.gain.exponentialRampToValueAtTime(0.01,n+0.3);o.start(n);o.stop(n+0.3);}
+else if(t==='c'){o.type='sine';o.frequency.setValueAtTime(400,n);o.frequency.exponentialRampToValueAtTime(800,n+0.2);g.gain.setValueAtTime(0.2,n);g.gain.exponentialRampToValueAtTime(0.01,n+0.2);o.start(n);o.stop(n+0.2);}
+else if(t==='a'){o.type='square';o.frequency.setValueAtTime(600,n);o.frequency.exponentialRampToValueAtTime(1200,n+0.1);g.gain.setValueAtTime(0.1,n);g.gain.exponentialRampToValueAtTime(0.01,n+0.1);o.start(n);o.stop(n+0.1);}}
+
+const gr=$('d-g'); let sH=hr[0]||'';
+function rnH(){gr.innerHTML=''; hr.forEach((u,i)=>{let c=document.createElement('div');c.className='d-c'+(i===hFi?' s':'');c.innerHTML=rO(u);c.onclick=()=>{hFi=i;rnH();sH=u;$('st-b').style.display='inline-block';};gr.appendChild(c);}); sH=hr[hFi]; $('st-b').style.display='inline-block';}
+rnH();
+
+window.sG=function(){if(sEn){iA();bgM.play().catch(()=>{});}$('s-b').innerText=sEn?'🔊':'🔇';$('p-b').style.display='flex';$('s-s').style.display='none';pO.style.display='flex';pO.innerHTML=rO(sH);uL();iI();gO(60);sA();sE(${cf.eC});sHL(4);if('ontouchstart' in window||navigator.maxTouchPoints>0)$('dp').style.display='flex';gSt=1;window.focus();requestAnimationFrame(gL);};
+function gO(c){for(let i=0;i<c;i++){let e=document.createElement('div');e.className='g-o ob';let iP=Math.random()>0.5;e.innerHTML=rO(iP?'${cf.o1}':'${cf.o2}');let s=iP?80:60;e.style.fontSize=s+'px';e.style.width=s+'px';e.style.height=s+'px';let x,y;do{x=Math.random()*2300+100;y=Math.random()*2300+100;}while(Math.abs(x-1250)<150&&Math.abs(y-1250)<150);e.style.left=x+'px';e.style.top=y+'px';w.appendChild(e);ob.push({x:x,y:y,r:s*0.4});}}
+function sA(){qD.forEach((q,i)=>{let e=document.createElement('div');e.className='g-o ar';e.innerHTML=rO('${cf.aI}');let p=gP();e.style.left=p.x+'px';e.style.top=p.y+'px';w.appendChild(e);ar.push({e:e,x:p.x,y:p.y,a:1,q:q,i:i,r:25});});}
+// Врагам теперь дается радиус 35 вместо 25, так как их размер увеличен
+function sE(c){for(let i=0;i<c;i++){let e=document.createElement('div');e.className='g-o en';e.innerHTML=rO('${cf.eI}');let p=gP();e.style.left=p.x+'px';e.style.top=p.y+'px';w.appendChild(e);en.push({e:e,x:p.x,y:p.y,r:35,dx:(Math.random()>0.5?1:-1)*(Math.random()*1.5+0.5),dy:(Math.random()>0.5?1:-1)*(Math.random()*1.5+0.5)});}}
+function sHL(c){for(let i=0;i<c;i++){let e=document.createElement('div');e.className='g-o hl';e.innerHTML=rO('${cf.apI}');let p=gP();e.style.left=p.x+'px';e.style.top=p.y+'px';w.appendChild(e);hl.push({e:e,x:p.x,y:p.y,a:1,r:20});}}
+function gP(){let x,y,sf=0;while(!sf){x=Math.random()*2300+100;y=Math.random()*2300+100;sf=1;for(let o of ob)if(Math.sqrt((x-o.x)**2+(y-o.y)**2)<80)sf=0;}return{x,y};}
+function uL(){let c=$('l-c');c.innerHTML='';for(let i=0;i<${cf.mL};i++){let d=document.createElement('div');d.className='ht'+(i>=cL?' ls':'');d.innerHTML=rO('${cf.lI}');c.appendChild(d);}if(cL<=0)eG(0);}
+function iI(){let c=$('i-c');c.innerHTML='';for(let i=0;i<tA;i++)c.innerHTML+='<div class="i-s" id="sl-'+i+'"></div>';}
+
+// Главный цикл: останавливается, если isP (пауза) = true
+function gL(){if(gSt!==1||isP)return;hM();uC();uE();cC();requestAnimationFrame(gL);}
+
+// Хитбокс героя увеличен с 15 до 25
+function hM(){let nX=pX,nY=pY;if(ks.u)nY-=sp;if(ks.d)nY+=sp;if(ks.l){nX-=sp;pO.style.transform="translate(-50%,-50%) scaleX(1)";}if(ks.r){nX+=sp;pO.style.transform="translate(-50%,-50%) scaleX(-1)";}if(nX<35)nX=35;if(nX>2465)nX=2465;if(nY<35)nY=35;if(nY>2465)nY=2465;let cX=1,cY=1;for(let o of ob){if(Math.sqrt((nX-o.x)**2+(pY-o.y)**2)<25+o.r)cX=0;if(Math.sqrt((pX-o.x)**2+(nY-o.y)**2)<25+o.r)cY=0;}if(cX)pX=nX;if(cY)pY=nY;pO.style.left=pX+'px';pO.style.top=pY+'px';}
+function uC(){let cX=Math.max(0,Math.min(pX-vp.clientWidth/2,2500-vp.clientWidth)),cY=Math.max(0,Math.min(pY-vp.clientHeight/2,2500-vp.clientHeight));w.style.transform='translate('+(-cX)+'px,'+(-cY)+'px)';}
+function uE(){en.forEach(e=>{e.x+=e.dx;e.y+=e.dy;if(e.x<=35||e.x>=2465)e.dx*=-1;if(e.y<=35||e.y>=2465)e.dy*=-1;if(e.dx>0)e.e.classList.add('fl');else e.e.classList.remove('fl');e.e.style.left=e.x+'px';e.e.style.top=e.y+'px';});}
+function cC(){ar.forEach(a=>{if(a.a&&Math.sqrt((pX-a.x)**2+(pY-a.y)**2)<30+a.r)tQ(a);});if(!iIn)en.forEach(e=>{if(Math.sqrt((pX-e.x)**2+(pY-e.y)**2)<25+e.r){pS('h');tD();}});hl.forEach(h=>{if(!h.a)return;let d=Math.sqrt((pX-h.x)**2+(pY-h.y)**2);if(d<200)h.e.classList.add('v');else h.e.classList.remove('v');if(d<30+h.r){if(cL<${cf.mL}){pS('a');cL++;h.a=0;h.e.style.display='none';uL();sF("+1 LIFE",'#0f0');}}});}
+function tD(){cL--;uL();sF('${lang.wr}','#f00');iIn=1;pO.classList.add('in');pY+=40;setTimeout(()=>{iIn=0;pO.classList.remove('in');},1500);}
+function sF(t,c){let e=document.createElement('div');e.className='d-t';e.style.color=c;e.innerText=t;e.style.left=pX+'px';e.style.top=(pY-30)+'px';w.appendChild(e);setTimeout(()=>e.remove(),1000);}
+function uQF(i){qFi=i;$$('.o-b').forEach((b,j)=>{if(j===i)b.classList.add('fc');else b.classList.remove('fc');});}
+function tQ(a){gSt=2;cAi=a.i;aQt=a.q.t;ks={u:0,d:0,l:0,r:0};$('q-q').innerText=a.q.q;let oB=$('q-o');oB.innerHTML='';if(aQt==='c'){let os=[...a.q.o].sort(()=>Math.random()-0.5);qFi=0;os.forEach((o,i)=>{let b=document.createElement('button');b.className='o-b'+(i===0?' fc':'');b.innerText=o.t;b.onmouseenter=()=>uQF(i);b.onclick=()=>hA(b,o.c);oB.appendChild(b);});}else{let i=document.createElement('input');i.type='text';i.className='q-i';i.placeholder='${lang.ta}';let b=document.createElement('button');b.className='o-b fc';b.innerText='${lang.su}';b.onclick=()=>{let v=i.value.trim().toLowerCase();hA(b,v===a.q.a.trim().toLowerCase());};oB.appendChild(i);oB.appendChild(b);setTimeout(()=>i.focus(),100);}$('q-m').style.display='flex';pY+=20;hM();}
+function hA(b,c){$$('.o-b,.q-i').forEach(x=>x.disabled=1);if(c){pS('c');b.classList.add('cr');setTimeout(()=>{document.getElementById('q-m').style.display='none';let a=ar[cAi];a.a=0;a.e.style.display='none';$('sl-'+aC).innerHTML=rO('${cf.aI}');aC++;gSt=1;window.focus();sF('${lang.ri}','#facc15');requestAnimationFrame(gL);if(aC>=tA)eG(1);},800);}else{pS('w');b.classList.add('wr');setTimeout(()=>{document.getElementById('q-m').style.display='none';tD();gSt=1;window.focus();requestAnimationFrame(gL);},800);}}
+function eG(w){gSt=3;$('e-s').style.display='flex';let t=$('e-t');if(w){t.innerText='${lang.w}';t.style.color="#4caf50";}else{t.innerText='${lang.l}';t.style.color="#ef5350";}}
+
+window.addEventListener('keydown',e=>{
+    if(gSt===0){
+        if(e.key==='ArrowLeft'||e.key==='a'){e.preventDefault();hFi=Math.max(0,hFi-1);rnH();}
+        if(e.key==='ArrowRight'||e.key==='d'){e.preventDefault();hFi=Math.min(hr.length-1,hFi+1);rnH();}
+        if(e.key==='Enter'){e.preventDefault();sG();}
+    } else if(gSt===2){
+        let bs=$$('.o-b');
+        if(aQt==='c'){if(e.key==='ArrowUp'||e.key==='w'){e.preventDefault();uQF(Math.max(0,qFi-1));}if(e.key==='ArrowDown'||e.key==='s'){e.preventDefault();uQF(Math.min(bs.length-1,qFi+1));}if(e.key==='Enter'){e.preventDefault();bs[qFi].click();}}
+        else if(aQt==='t'&&e.key==='Enter'){e.preventDefault();bs[0].click();}
+    } else if(gSt===3){
+        if(e.key==='Enter'){e.preventDefault();location.reload();}
+    } else if(gSt===1){
+        if(e.key.toLowerCase()==='p'||e.key==='Escape'){e.preventDefault();tP();}
+        if(!isP) { // Управление работает только если нет паузы
+            if(e.key==='ArrowUp'||e.key==='w')ks.u=1;if(e.key==='ArrowDown'||e.key==='s')ks.d=1;if(e.key==='ArrowLeft'||e.key==='a')ks.l=1;if(e.key==='ArrowRight'||e.key==='d')ks.r=1;
+        }
+    }
+});
+window.addEventListener('keyup',e=>{if(gSt===1){if(e.key==='ArrowUp'||e.key==='w')ks.u=0;if(e.key==='ArrowDown'||e.key==='s')ks.d=0;if(e.key==='ArrowLeft'||e.key==='a')ks.l=0;if(e.key==='ArrowRight'||e.key==='d')ks.r=0;}});
+const sD=(id,k)=>{let b=$(id);if(!b)return;let p=e=>{e.preventDefault();ks[k]=1;};let r=e=>{e.preventDefault();ks[k]=0;};b.addEventListener('touchstart',p);b.addEventListener('touchend',r);b.addEventListener('mousedown',p);b.addEventListener('mouseup',r);b.addEventListener('mouseleave',r);};
+sD('b-u','u');sD('b-d','d');sD('b-l','l');sD('b-r','r');
+`;
+
+            currentHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>${lang.t}</title><style>@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');body,html{margin:0;padding:0;background:#000;color:#fff;font-family:'Press Start 2P',cursive;overflow:hidden;width:100%;height:100%;user-select:none;-webkit-user-select:none;}#vp{position:relative;width:100vw;height:100vh;overflow:hidden;background:#000;outline:none;}#w{position:absolute;top:0;left:0;width:2500px;height:2500px;${bgCSS}transition:transform 0.05s linear;}.w-b{position:absolute;inset:0;border:20px solid rgba(0,0,0,0.5);pointer-events:none;z-index:10;box-shadow:inset 0 0 50px #000;}#s-s{position:absolute;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;}h1{color:#facc15;text-shadow:3px 3px 0 #d97706;font-size:clamp(20px,4vw,30px);margin-bottom:10px;line-height:1.4;}.sub{font-size:10px;color:#aaa;margin-bottom:30px;line-height:1.5;max-width:80%;}#d-g{display:flex;gap:15px;flex-wrap:wrap;justify-content:center;max-width:600px;margin-bottom:30px;}.d-c{width:60px;height:60px;font-size:40px;border:3px solid #555;background:rgba(0,0,0,0.6);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;overflow:hidden;}.d-c.s{border-color:#facc15;background:rgba(90,75,18,0.8);box-shadow:0 0 15px #facc15;transform:scale(1.1);animation:bc 1s infinite;}@keyframes bc{0%,100%{transform:scale(1.1) translateY(0);}50%{transform:scale(1.1) translateY(-5px);}}.btn{background:#d97706;color:#fff;border:3px solid #facc15;padding:15px 30px;font-family:inherit;font-size:14px;cursor:pointer;text-transform:uppercase;box-shadow:4px 4px 0 #000;transition:0.1s;}.btn:active{transform:translate(4px,4px);box-shadow:0 0 0 #000;}#hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;z-index:500;pointer-events:none;}.ht{font-size:24px;display:flex;align-items:center;justify-content:center;width:24px;height:24px;filter:drop-shadow(2px 2px 0 #000);}.ht.ls{filter:grayscale(100%) brightness(0.3);}#i-c{display:flex;gap:5px;background:rgba(0,0,0,0.5);padding:5px;border:2px solid #555;border-radius:5px;}.i-s{font-size:20px;width:24px;height:24px;border:1px dashed #777;background:rgba(0,0,0,0.3);display:flex;justify-content:center;align-items:center;}.btn-c{pointer-events:auto;background:rgba(0,0,0,0.6);border:2px solid #555;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;} .g-o{position:absolute;font-size:40px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 5px 5px rgba(0,0,0,0.5));transform:translate(-50%,-50%);}#p,.en{width:70px;height:70px;font-size:60px;}#p{z-index:20;}#p.in{animation:bl 0.2s infinite;opacity:0.7;}@keyframes bl{0%{filter:brightness(2) sepia(1);}100%{filter:none;}}.en{z-index:15;}.en.fl{transform:translate(-50%,-50%) scaleX(-1);}.ob{z-index:12;filter:drop-shadow(0 8px 8px rgba(0,0,0,0.8));}.ar{font-size:30px;width:40px;height:40px;z-index:10;animation:fO 2s infinite ease-in-out;}.hl{font-size:24px;width:30px;height:30px;z-index:10;opacity:0;transition:opacity 0.5s ease;animation:fO 2s infinite reverse;}.hl.v{opacity:1;}@keyframes fO{0%,100%{margin-top:0;}50%{margin-top:-5px;}}#dp{position:absolute;bottom:20px;left:20px;width:140px;height:140px;z-index:600;display:flex;flex-wrap:wrap;opacity:0.5;}.d-b{width:33.33%;height:33.33%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);border:2px solid #555;font-size:16px;border-radius:10px;cursor:pointer;color:#fff;}.d-b:active{background:rgba(255,255,255,0.5);}.em{background:transparent;border:none;pointer-events:none;}#q-m{position:absolute;inset:0;background:rgba(0,0,0,0.8);z-index:1000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;}.q-b{background:#222;border:4px solid #facc15;padding:20px;width:90%;max-width:400px;box-shadow:8px 8px 0 #000;}#q-q{font-size:12px;margin-bottom:20px;line-height:1.6;color:#fff;}#q-o{display:flex;flex-direction:column;gap:10px;}.q-i{width:100%;box-sizing:border-box;padding:15px;font-family:inherit;font-size:12px;margin-bottom:5px;text-align:center;background:#111;color:#facc15;border:2px solid #555;text-transform:uppercase;}.q-i:focus{border-color:#facc15;outline:none;}.o-b{background:#111;color:#fff;border:2px solid #555;padding:15px;font-family:inherit;font-size:10px;cursor:pointer;text-align:left;}.o-b.fc,.o-b:hover:not(:disabled){border-color:#facc15;background:#333;}.o-b.cr{background:#2e7d32!important;border-color:#4caf50!important;}.o-b.wr{background:#c62828!important;border-color:#ef5350!important;}#e-s{position:absolute;inset:0;background:rgba(0,0,0,0.9);z-index:1500;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;}#e-t{font-size:clamp(24px,5vw,40px);margin-bottom:20px;text-shadow:4px 4px 0 #000;}.d-t{position:absolute;font-size:16px;text-shadow:2px 2px 0 #000;z-index:800;pointer-events:none;animation:fU 1s forwards;font-weight:bold;}@keyframes fU{0%{transform:translateY(0) scale(1);opacity:1;}100%{transform:translateY(-40px) scale(1.5);opacity:0;}}</style></head><body tabindex="0">
+<div id="vp"><div id="w"><div class="w-b"></div><div id="p" class="g-o" style="display:none;"></div></div><div id="s-s"><h1 id="m-title">${lang.t}</h1><div class="sub" id="m-sub">${lang.s}</div><div id="d-g"></div><button class="btn" id="st-b" onclick="sG()" style="display:none;">${lang.st}</button></div><div id="hud"><div style="display:flex;gap:5px;" id="l-c"></div><div style="display:flex;align-items:flex-start;gap:10px;"><div id="i-c"></div><div style="display:flex;flex-direction:column;gap:5px;"><div class="btn-c" id="s-b" onclick="tS()">🔇</div><div class="btn-c" id="p-b" onclick="tP()" style="display:none;">⏸️</div></div></div></div><div id="dp" style="display:none;"><div class="em"></div><div class="d-b" id="b-u">▲</div><div class="em"></div><div class="d-b" id="b-l">◀</div><div class="d-b" id="b-d">▼</div><div class="d-b" id="b-r">▶</div></div><div id="q-m"><div class="q-b"><div id="q-q"></div><div id="q-o"></div></div></div><div id="e-s"><div id="e-t"></div><button class="btn" onclick="location.reload()">${lang.r}</button></div><div id="pa-m" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.7);z-index:900;align-items:center;justify-content:center;font-size:clamp(24px,5vw,50px);color:#facc15;text-shadow:4px 4px 0 #000;">${lang.pa}</div></div>
+<script>${gameScript}<\/script></body></html>`;
+
+            document.getElementById('previewFrame').srcdoc = currentHTML;
+        }
+
+        function downloadHTML() {
+            generateCode();
+            const blob = new Blob([currentHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'jurassic_game.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        let previewTimeout;
+        function debounceGenerate() { clearTimeout(previewTimeout); previewTimeout = setTimeout(generateCode, 500); }
+        document.querySelectorAll('input, select, textarea').forEach(el => { el.addEventListener('input', debounceGenerate); el.addEventListener('change', debounceGenerate); });
+        debounceGenerate();
+    </script>
+</body>
+</html>
