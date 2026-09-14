@@ -440,11 +440,18 @@ rnH();
 window.sG=function(){if(sEn){iA();bgM.play().catch(()=>{});}$('s-b').innerText=sEn?'🔊':'🔇';$('p-b').style.display='flex';$('s-s').style.display='none';pO.style.display='flex';pO.innerHTML=rO(sH);uL();iI();gO(60);sA();sE(${cf.eC});sHL(4);if('ontouchstart' in window||navigator.maxTouchPoints>0)$('dp').style.display='flex';gSt=1;window.focus();requestAnimationFrame(gL);};
 
 function gO(c){
+    let o1 = '${cf.o1}';
+    let o2 = '${cf.o2}';
+    if(!o1 && !o2) o1 = '🌴';
+
     for(let i=0;i<c;i++){
         let e=document.createElement('div');
         e.className='g-o ob';
         let iP=Math.random()>0.5;
-        e.innerHTML=rO(iP?'${cf.o1}':'${cf.o2}');
+        let imgChoice = (iP && o2) ? o2 : o1;
+        if(!imgChoice) imgChoice = o1 || '🌴';
+
+        e.innerHTML=rO(imgChoice);
         let s=iP?80:60;
         e.style.fontSize=s+'px';
         e.style.width=s+'px';
