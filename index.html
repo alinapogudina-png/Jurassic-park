@@ -186,7 +186,6 @@
     </div>
 
     <script>
-        
         function handleFileUpload(event) {
             const fileInput = event.target;
             const targetInputId = fileInput.dataset.target;
@@ -439,7 +438,37 @@ function rnH(){gr.innerHTML=''; hr.forEach((u,i)=>{let c=document.createElement(
 rnH();
 
 window.sG=function(){if(sEn){iA();bgM.play().catch(()=>{});}$('s-b').innerText=sEn?'🔊':'🔇';$('p-b').style.display='flex';$('s-s').style.display='none';pO.style.display='flex';pO.innerHTML=rO(sH);uL();iI();gO(60);sA();sE(${cf.eC});sHL(4);if('ontouchstart' in window||navigator.maxTouchPoints>0)$('dp').style.display='flex';gSt=1;window.focus();requestAnimationFrame(gL);};
-function gO(c){for(let i=0;i<c;i++){let e=document.createElement('div');e.className='g-o ob';let iP=Math.random()>0.5;e.innerHTML=rO(iP?'${cf.o1}':'${cf.o2}');let s=iP?80:60;e.style.fontSize=s+'px';e.style.width=s+'px';e.style.height=s+'px';let x,y;do{x=Math.random()*2300+100;y=Math.random()*2300+100;}while(Math.abs(x-1250)<150&&Math.abs(y-1250)<150);e.style.left=x+'px';e.style.top=y+'px';w.appendChild(e);ob.push({x:x,y:y,r:s*0.4});}}
+
+function gO(c){
+    for(let i=0;i<c;i++){
+        let e=document.createElement('div');
+        e.className='g-o ob';
+        let iP=Math.random()>0.5;
+        e.innerHTML=rO(iP?'${cf.o1}':'${cf.o2}');
+        let s=iP?80:60;
+        e.style.fontSize=s+'px';
+        e.style.width=s+'px';
+        e.style.height=s+'px';
+        let x,y,sf,attempts=0;
+        let r=s*0.35;
+        do{
+            sf=1;
+            x=Math.random()*2300+100;
+            y=Math.random()*2300+100;
+            if(Math.abs(x-1250)<150&&Math.abs(y-1250)<150){sf=0;continue;}
+            for(let o of ob){
+                if(Math.sqrt((x-o.x)**2+(y-o.y)**2) < (r + o.r + 60)){sf=0;break;}
+            }
+            attempts++;
+            if(attempts>200)break;
+        }while(!sf);
+        e.style.left=x+'px';
+        e.style.top=y+'px';
+        w.appendChild(e);
+        ob.push({x:x,y:y,r:r});
+    }
+}
+
 function sA(){qD.forEach((q,i)=>{let e=document.createElement('div');e.className='g-o ar';e.innerHTML=rO('${cf.aI}');let p=gP();e.style.left=p.x+'px';e.style.top=p.y+'px';w.appendChild(e);ar.push({e:e,x:p.x,y:p.y,a:1,q:q,i:i,r:25});});}
 function sE(c){for(let i=0;i<c;i++){let e=document.createElement('div');e.className='g-o en';e.innerHTML=rO('${cf.eI}');let p=gP();e.style.left=p.x+'px';e.style.top=p.y+'px';w.appendChild(e);en.push({e:e,x:p.x,y:p.y,r:35,dx:(Math.random()>0.5?1:-1)*(Math.random()*1.5+0.5),dy:(Math.random()>0.5?1:-1)*(Math.random()*1.5+0.5)});}}
 function sHL(c){for(let i=0;i<c;i++){let e=document.createElement('div');e.className='g-o hl';e.innerHTML=rO('${cf.apI}');let p=gP();e.style.left=p.x+'px';e.style.top=p.y+'px';w.appendChild(e);hl.push({e:e,x:p.x,y:p.y,a:1,r:20});}}
